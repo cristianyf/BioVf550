@@ -4,14 +4,12 @@ import android.graphics.Bitmap
 import com.biominiseries.CaptureResponder
 import com.biominiseries.IBioMiniDevice
 import com.biominiseries.IBioMiniDevice.CaptureOption
-import com.biominiseries.IBioMiniDevice.TemplateData
 import com.biominiseries.enums.DeviceDataHandler
 import com.biominiseries.util.Logger
 import java.io.UnsupportedEncodingException
 
 object FingerCapture {
 
-    private var mTemplateData: TemplateData? = null
     var mCurrentDevice: IBioMiniDevice? = null
     private val mCaptureOption = CaptureOption()
     var mDeviceDataHandler: DeviceDataHandler? = null
@@ -24,7 +22,6 @@ object FingerCapture {
             mDeviceDataHandler!!.dataCallback = mCaptureCallBack
         }
 
-        mTemplateData = null
         mCaptureOption.captureFuntion = IBioMiniDevice.CaptureFuntion.CAPTURE_SINGLE
         mCaptureOption.extractParam.captureTemplate = true
         mCaptureOption.extractParam.maxTemplateSize =
@@ -65,13 +62,6 @@ object FingerCapture {
             capturedTemplate: IBioMiniDevice.TemplateData?,
             fingerState: IBioMiniDevice.FingerState
         ): Boolean {
-            if (capturedTemplate != null) {
-                Logger.d("TemplateData is not null!")
-                mTemplateData = capturedTemplate
-            }
-            if (option.captureFuntion == IBioMiniDevice.CaptureFuntion.ENROLLMENT && mTemplateData != null) {
-                Logger.d("DATA -> ${mTemplateData!!.data}  SIZE -> ${mTemplateData!!.data.size}")
-            }
 
             //fpquality example
             if (mCurrentDevice != null) {

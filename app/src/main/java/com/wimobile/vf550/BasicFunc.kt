@@ -65,16 +65,11 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
     private var mBioMiniFactory: BioMiniFactory? = null
     var mCurrentDevice: IBioMiniDevice? = null
     private val mCaptureOption = CaptureOption()
-    private var mTemplateData: TemplateData? = null
-    private var mCaptureStartTime: Long = 0
-    var mDeviceDataHandler: DeviceDataHandler? = null
     private var isAbortCapturing = false
-    private val mIsAutoExportTemplate = false
 
     //UI Component
     private var mImageView: ImageView? = null
     private var mCaptureSingleButton: Button? = null
-    private var mImageViewCanvas: Canvas? = null
 
     //+FP POWER ON/OFF
     var m_usb_manager: UsbManager? = null
@@ -98,11 +93,9 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
         //FP POWER ON/OFF+
         if (mContext == null) mContext = this
         requestWakeLock()
-        mDeviceDataHandler = DeviceDataHdlr.getInstance()
         if (mUsbManager == null) mUsbManager = getSystemService(USB_SERVICE) as UsbManager
         initUsbListener()
         addDeviceToUsbDeviceList()
-        mDeviceDataHandler!!.dataCallback = mCaptureCallBack
     }
 
     fun loadResource() {
@@ -292,12 +285,6 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
                     createBioMiniDevice()
                 }
 
-                REMOVE_USB_DEVICE -> {
-                    Logger.d("REMOVE_USB_DEVICE")
-                    removeDevice()
-                }
-
-                UPDATE_DEVICE_INFO -> Logger.d("UPDATE_DEVICE_INFO")
                 REQUEST_USB_PERMISSION -> {
                     var FLAG_MUTABLE = 0 //PendingIntent.FLAG_MUTABLE
                     if (Build.VERSION.SDK_INT >= 31 /*Build.VERSION_CODES.S*/) {
@@ -311,13 +298,6 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
                     mUsbManager!!.requestPermission(mUsbDevice, mPermissionIntent)
                 }
 
-                MAKE_DELAY_1SEC -> try {
-                    Thread.sleep(1000)
-                } catch (e: InterruptedException) {
-                    e.printStackTrace()
-                }
-
-                ADD_DEVICE -> addDeviceToUsbDeviceList()
                 DO_FIRMWARE_UPDATE -> {
                     val firmware_file_path = msg.obj as String
                     try {
@@ -327,43 +307,9 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
                     }
                 }
 
-                CLEAR_VIEW_FOR_CAPTURE -> cleareViewForCapture()
                 SET_TEXT_LOGVIEW -> {
                     val _log = msg.obj as String
                     Log.d(TAG, "SET_TEXT_LOGVIEW: $_log\n")
-                }
-
-                MAKE_TOAST -> {
-                    Logger.d("MAKE_TOAST : " + msg.obj as String)
-                    Toast.makeText(mContext, msg.obj as String, Toast.LENGTH_SHORT).show()
-                }
-
-                SHOW_CAPTURE_IMAGE_DEVICE -> {
-                    Logger.d("SHOW_CAPTURE_IMAGE_DEVICE")
-                    cleareImageView()
-                    val bundle = msg.data
-                    if (bundle != null) {
-                        val _captureImgDev =
-                            bundle.getParcelable<Parcelable>("capturedImage") as Bitmap?
-                        val _captureOtherImgDev =
-                            _captureImgDev!!.copy(Bitmap.Config.ARGB_8888, true)
-                        val coord = bundle.getIntegerArrayList("coordinate")
-                        mImageViewCanvas = Canvas(_captureOtherImgDev)
-                        if (coord != null && coord.size > 0) {
-                            Logger.d("Core Coordinate X : " + coord[0] + " Y : " + coord[1])
-                            val paint = Paint()
-                            paint.isAntiAlias = true
-                            paint.color = Color.RED
-                            mImageViewCanvas!!.drawCircle(
-                                coord[0].toFloat(),
-                                coord[1].toFloat(),
-                                10f,
-                                paint
-                            )
-                        }
-                        mImageView!!.setImageBitmap(_captureOtherImgDev)
-                    }
-                    Logger.d("mIsAutoExportTemplate = $mIsAutoExportTemplate")
                 }
 
                 SET_UI_CLICKED_ENABLED -> {
@@ -390,65 +336,6 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
     @Synchronized
     fun setLogInTextView(msg: String) {
         sendMsgToHandler(SET_TEXT_LOGVIEW, msg)
-    }
-
-
-    var mCaptureCallBack: CaptureResponder = object : CaptureResponder() {
-        override fun onCapture(context: Any, fingerState: FingerState) {
-            super.onCapture(context, fingerState)
-        }
-
-        override fun onCaptureEx(
-            context: Any,
-            option: IBioMiniDevice.CaptureOption,
-            capturedImage: Bitmap?,
-            capturedTemplate: IBioMiniDevice.TemplateData?,
-            fingerState: IBioMiniDevice.FingerState
-        ): Boolean {
-            if (capturedTemplate != null) {
-                Logger.d("TemplateData is not null!")
-                mTemplateData = capturedTemplate
-            }
-            if (option.captureFuntion == IBioMiniDevice.CaptureFuntion.ENROLLMENT && mTemplateData != null) {
-                Logger.d("DATA -> ${mTemplateData!!.data}  SIZE -> ${mTemplateData!!.data.size}")
-            }
-
-            //fpquality example
-            if (mCurrentDevice != null) {
-                val imageData = mCurrentDevice!!.captureImageAsRAW_8
-                if (imageData != null) {
-                    val mode = IBioMiniDevice.FpQualityMode.NQS_MODE_DEFAULT
-                    val _fpquality = mCurrentDevice!!.getFPQuality(
-                        imageData,
-                        mCurrentDevice!!.imageWidth,
-                        mCurrentDevice!!.imageHeight,
-                        mode.value()
-                    )
-                    Logger.d("_fpquality : $_fpquality")
-                }
-            }
-            return true
-        }
-
-        override fun onCaptureError(context: Any, errorCode: Int, error: String) {
-            when (errorCode) {
-                IBioMiniDevice.ErrorCode.CTRL_ERR_IS_CAPTURING.value() -> {
-                    Logger.d("CTRL_ERR_CAPTURE_ABORTED occured. CTRL_ERR_IS_CAPTURING")
-                }
-
-                IBioMiniDevice.ErrorCode.CTRL_ERR_CAPTURE_ABORTED.value() -> {
-                    Logger.d("CTRL_ERR_CAPTURE_ABORTED occured. CTRL_ERR_CAPTURE_ABORTED")
-                }
-
-                IBioMiniDevice.ErrorCode.CTRL_ERR_FAKE_FINGER.value() -> {
-                    Logger.d("CTRL_ERR_CAPTURE_ABORTED occured. CTRL_ERR_FAKE_FINGER")
-                }
-
-                else -> {
-                    Logger.d("CTRL_ERR_CAPTURE_ABORTED occured.UNKNOWN ERROR")
-                }
-            }
-        }
     }
 
     private fun createBioMiniDevice() {
@@ -544,40 +431,6 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
         cleareImageView()
     }
 
-    private fun doSinlgeCapture() {
-        Logger.d("START!")
-        mTemplateData = null
-        mCaptureOption.captureFuntion = IBioMiniDevice.CaptureFuntion.CAPTURE_SINGLE
-        mCaptureOption.extractParam.captureTemplate = true
-        mCaptureOption.extractParam.maxTemplateSize =
-            IBioMiniDevice.MaxTemplateSize.MAX_TEMPLATE_1024
-        if (mDeviceDataHandler!!.secureMode && mDeviceDataHandler!!.secureModeKey == "" == false) {
-            try {
-                val _key = mDeviceDataHandler!!.secureModeKey
-                mCurrentDevice!!.setEncryptionKey(_key.toByteArray(charset("UTF-8")))
-                Logger.d("getSecureDataMode: " + mDeviceDataHandler!!.secureDataMode)
-                val secureDataMode = SecureDataMode.fromInt(
-                    mDeviceDataHandler!!.secureDataMode
-                )
-                mCurrentDevice!!.setEncryptDataMode(secureDataMode, _key)
-            } catch (e: UnsupportedEncodingException) {
-                e.printStackTrace()
-            }
-        } else {
-            mCurrentDevice!!.setEncryptDataMode(SecureDataMode.NONE, "")
-        }
-        sendEmptyMsgToHandler(CLEAR_VIEW_FOR_CAPTURE)
-        sendMsgToHandler(SET_USER_INPUT_ENABLED, false)
-        setLogInTextView(resources.getString(R.string.toast_viewpager_capturing))
-        if (mCurrentDevice != null) {
-            val result = mCurrentDevice!!.captureSingle(
-                mCaptureOption,
-                mCaptureCallBack,
-                true
-            )
-        }
-    }
-
     private fun doAbortCapture() {
         Thread(Runnable {
             if (mCurrentDevice != null) {
@@ -664,17 +517,6 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
                 val msg = Message()
                 msg.what = DO_FIRMWARE_UPDATE
                 msg.obj = fwfile
-                mHandler.sendMessage(msg)
-            }
-
-            SEND_TEMPLATE_TO_DEVICE_EVENT -> if (resultCode == RESULT_OK) {
-                val _templateFile = data!!.data
-
-                // Get the path
-                val path = getPath(mContext, _templateFile)
-                val msg = Message()
-                msg.what = SEND_TEMPLATE_TO_DEVICE
-                msg.obj = path
                 mHandler.sendMessage(msg)
             }
         }
@@ -810,24 +652,15 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
         //basic event
         private const val BASE_EVENT = 3000
         private const val ACTIVATE_USB_DEVICE = BASE_EVENT + 1
-        private const val REMOVE_USB_DEVICE = BASE_EVENT + 2
-        private const val UPDATE_DEVICE_INFO = BASE_EVENT + 3
         private const val REQUEST_USB_PERMISSION = BASE_EVENT + 4
-        private const val MAKE_DELAY_1SEC = BASE_EVENT + 5
-        private const val ADD_DEVICE = BASE_EVENT + 6
         private const val DO_FIRMWARE_UPDATE = BASE_EVENT + 7
-        private const val CLEAR_VIEW_FOR_CAPTURE = BASE_EVENT + 8
         private const val SET_TEXT_LOGVIEW = BASE_EVENT + 10
-        private const val MAKE_TOAST = BASE_EVENT + 11
-        private const val SHOW_CAPTURE_IMAGE_DEVICE = BASE_EVENT + 12
         private const val SET_USER_INPUT_ENABLED = BASE_EVENT + 13
         private const val SET_UI_CLICKED_ENABLED = BASE_EVENT + 14
-        private const val SEND_TEMPLATE_TO_DEVICE = BASE_EVENT + 15
 
         //File Browser Event
         private const val BASE_FILE_BROWSER_EVENT = 5000
         private const val FIRMWARE_UPDATE_EVENT = BASE_FILE_BROWSER_EVENT + 1
-        private const val SEND_TEMPLATE_TO_DEVICE_EVENT = BASE_FILE_BROWSER_EVENT + 3
 
         //Device ID
         private const val BioMiniSlim2 = 0x0408
