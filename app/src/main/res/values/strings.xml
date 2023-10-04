@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">VF550</string>
+    <string name="captured_image_view">CAPTURED IMAGE</string>
+    <string name="bt_capturesingle">SINGLE CAPTURE</string>
+    <string name="bt_abortcapture">ABORT CAPTURE</string>
+    <string name="error_device_not_conneted">Device is not connected. Please connect device first.</string>
+    <string name="error_other_capture_runnging">The current capture function cannot be started because other capture function is running.</string>
+    <string name="usb_detached">USB is disconnected. Please check USB connection.</string>
+    <string name="enroll_ok">Enrollment OK</string>
+    <string name="enroll_fail">Enrollment FAIL</string>
+    <string name="verify_ok">Verify OK</string>
+    <string name="verify_id">This is the fingerprint of the</string>
+    <string name="verify_not_match_by_templateType">Template type is not matched</string>
+    <string name="verify_not_match_by_tempateData">Template data is not matched</string>
+    <string name="verify_fail">Verify FAIL</string>
+    <string name="capture_single_ok">Capture Single OK</string>
+    <string name="capture_auto_ok">Capture Auto OK</string>
+    <string name="device_attached">Device Connected</string>
+    <string name="toast_viewpager_capturing">Capture is started. The page is locked until capture is finished.</string>
+
+</resources>
