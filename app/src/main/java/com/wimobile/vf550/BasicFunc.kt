@@ -10,10 +10,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.Cursor
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.net.Uri
@@ -23,7 +19,6 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.os.Parcelable
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.os.SystemClock
@@ -35,25 +30,18 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.biominiseries.BioMiniFactory
-import com.biominiseries.CaptureResponder
 import com.biominiseries.IBioMiniDevice
 import com.biominiseries.IBioMiniDevice.CaptureOption
-import com.biominiseries.IBioMiniDevice.FingerState
-import com.biominiseries.IBioMiniDevice.SecureDataMode
-import com.biominiseries.IBioMiniDevice.TemplateData
 import com.biominiseries.IUsbEventHandler.DeviceChangeEvent
-import com.biominiseries.enums.DeviceDataHandler
 import com.biominiseries.util.Logger
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.io.UnsupportedEncodingException
 
 class BasicFunc : AppCompatActivity(), View.OnClickListener {
     //Object
@@ -233,7 +221,7 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
                     return
                 }
                 Logger.d("bt_capturesingle clicked!")
-                FingerCapture.doSinlgeCapture(mCurrentDevice!!)
+                FingerCapture.doSingleCapture(this)
             }
         }
     }
@@ -370,11 +358,7 @@ class BasicFunc : AppCompatActivity(), View.OnClickListener {
                         cleareImageView()
                     }
                 }
-            } else {
-                Logger.d("mCurrentDevice is null")
             }
-        } else {
-            Logger.d("addDevice is fail!")
         }
     }
 
