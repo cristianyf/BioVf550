@@ -91,7 +91,7 @@ object FingerCapture {
 
     fun doSingleCapture(activity: AppCompatActivity): Int {
         val mCurrentDevice = createBioMiniDevice(activity)
-        if (mCurrentDevice?.isCapturing == true) {
+        if (mCurrentDevice == null || mCurrentDevice.isCapturing) {
             return 1
         }
 
@@ -113,14 +113,14 @@ object FingerCapture {
                 val secureDataMode = IBioMiniDevice.SecureDataMode.fromInt(
                     mDeviceDataHandler!!.secureDataMode
                 )
-                this.mCurrentDevice!!.setEncryptDataMode(secureDataMode, _key)
+                FingerCapture.mCurrentDevice!!.setEncryptDataMode(secureDataMode, _key)
             } catch (e: UnsupportedEncodingException) {
                 e.printStackTrace()
             }
         } else {
             mCurrentDevice!!.setEncryptDataMode(IBioMiniDevice.SecureDataMode.NONE, "")
         }
-        return if (this.mCurrentDevice != null) {
+        return if (FingerCapture.mCurrentDevice != null) {
             val captured = mCurrentDevice!!.captureSingle(
                 mCaptureOption,
                 mCaptureCallBack,
